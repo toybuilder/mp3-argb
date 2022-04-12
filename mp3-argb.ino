@@ -14,7 +14,7 @@ Servo servo;
 // Published values for SG90 servos; adjust if needed
 int minUs = 900;
 int maxUs = 2100;
-int servoPin = 15;
+int servoPin = 23;
 
 int pos = 0;      // position in degrees
 ESP32PWM pwm;
@@ -58,8 +58,8 @@ void updateLeds(CHSV color){
 }
 
 // DFPlayer related stuff
-#define DFPLAYER_RX 19
 #define DFPLAYER_TX 18
+#define DFPLAYER_RX 19
 HardwareSerial dfpSerial(1);  // RX, TX
 DFRobotDFPlayerMini myDFPlayer;
 void printDetail(uint8_t type, int value);
@@ -67,7 +67,7 @@ void printDetail(uint8_t type, int value);
 
 void setupDFPlayer() 
 {
-  dfpSerial.begin(9600,SERIAL_8N1,DFPLAYER_RX,DFPLAYER_TX);
+  dfpSerial.begin(9600,SERIAL_8N1,DFPLAYER_TX,DFPLAYER_RX);
   delay(5000);
   
   if (!myDFPlayer.begin(dfpSerial)) {
@@ -90,6 +90,11 @@ void setupDFPlayer()
 
 }
 
+#define BUTTON_PIN (16)
+int buttonPress() {
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  return digitalRead(BUTTON_PIN) == 0;
+}
 
 void setup()
 {
@@ -106,11 +111,17 @@ void loop()
   static unsigned long servotimer = millis();
   
   static int count=0;
+  static int need_song=0;
+
+  if ((millis() - timer > 1000) && buttonPress()) {
+    need_song=1;
+  }
   
-  if (millis() - timer > 8000) {
-    timer = millis();
+  if ((need_song) && (millis() - timer > 1000)) {
+    timer = millis();    
     myDFPlayer.next();  //Play next mp3 every 3 second.
     Serial.println(F("next song"));
+    need_song=0;
     
   }
   
